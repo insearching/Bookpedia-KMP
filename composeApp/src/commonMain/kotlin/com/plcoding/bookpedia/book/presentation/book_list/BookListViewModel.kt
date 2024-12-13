@@ -34,10 +34,12 @@ class BookListViewModel(
             if (cachedBooks.isEmpty()) {
                 observeSearchQuery()
             }
+            observeFavoriteBooks()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), _state.value)
 
     private var searchJob: Job? = null
+    private var observeFavoritesJob: Job? = null
 
     fun onAction(action: BookListAction) {
         when (action) {
@@ -57,6 +59,17 @@ class BookListViewModel(
                 }
             }
         }
+    }
+
+    private fun observeFavoriteBooks() {
+        observeFavoritesJob?.cancel()
+        observeFavoritesJob = bookRepository
+            .getFavoriteBooks()
+            .onEach { favoriteBooks ->
+                _state.update {
+                    it.copy(favoriteBooks = favoriteBooks)
+                }
+            }.launchIn(viewModelScope)
     }
 
     private fun observeSearchQuery() {

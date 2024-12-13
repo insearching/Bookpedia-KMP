@@ -1,5 +1,7 @@
 package com.plcoding.bookpedia
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -42,12 +44,15 @@ fun App() {
             navigation<Route.BookGraph>(
                 startDestination = Route.BookList
             ) {
-                composable<Route.BookList> {
+                composable<Route.BookList>(
+                    exitTransition = { slideOutHorizontally() },
+                    popEnterTransition = { slideInHorizontally() }
+                ) {
                     val viewModel = koinViewModel<BookListViewModel>()
                     val selectedBookViewModel =
                         it.sharedKoinViewModel<SelectedBookViewModel>(navController)
 
-                    LaunchedEffect(true){
+                    LaunchedEffect(true) {
                         selectedBookViewModel.onSelectedBook(null)
                     }
 
@@ -61,7 +66,10 @@ fun App() {
                         }
                     )
                 }
-                composable<Route.BookDetail> {
+                composable<Route.BookDetail>(
+                    enterTransition = { slideInHorizontally { initialOffset -> initialOffset } },
+                    exitTransition = { slideOutHorizontally { initialOffset -> initialOffset } }
+                ) {
                     val selectedBookViewModel =
                         it.sharedKoinViewModel<SelectedBookViewModel>(navController)
                     val viewModel = koinViewModel<BookDetailViewModel>()
@@ -86,7 +94,7 @@ fun App() {
 }
 
 @Composable
-private inline fun <reified T : ViewModel> NavBackStackEntry.sharedKoinViewModel(navController: NavController): T{
+private inline fun <reified T : ViewModel> NavBackStackEntry.sharedKoinViewModel(navController: NavController): T {
     val navGraphRoute = destination.parent?.route ?: return koinViewModel<T>()
     val parentEntry = remember(this) { navController.getBackStackEntry(navGraphRoute) }
     return koinViewModel(
